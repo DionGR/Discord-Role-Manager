@@ -100,38 +100,44 @@ to the Google Sheet assigned to that Discord Server.
 @BOT.command()
 @commands.has_permissions(administrator=True)
 async def export(ctx):
-    file_name = str(ctx.guild.id) + ".txt"
-    try:
-        with open(path.join(path.dirname(path.realpath(__file__)) + r"\serverdata", file_name), "r+") as server_file:
-            spreadsheet_id = server_file.read()
-            try:
-                role_list = ctx.guild.roles  # Export all the roles from a server. List of role type Objects.
-                role_list.reverse()
-                role_names = [role.name for role in role_list]  # Get all the role names from the role Objects.
-                role_permissions = {role: dict(role.permissions) for role in role_list}  # Put Roles in a dictionary and their permission_values in sub-dictionaries.
-                permission_names = list(role_permissions[role_list[0]].keys())  # Get all the permission names.
-                permission_values = permission_values_to_emojis(list(role_permissions.values()), permission_names)  # Get all of the permissions values and convert them to √ or X.
+    if ctx.message.author.id == ctx.guild.owner_id:
+        file_name = str(ctx.guild.id) + ".txt"
+        try:
+            with open(path.join(path.dirname(path.realpath(__file__)) + r"\serverdata", file_name), "r+") as server_file:
+                spreadsheet_id = server_file.read()
+                try:
+                    role_list = ctx.guild.roles  # Export all the roles from a server. List of role type Objects.
+                    role_list.reverse()
+                    role_names = [role.name for role in role_list]  # Get all the role names from the role Objects.
+                    role_permissions = {role: dict(role.permissions) for role in role_list}  # Put Roles in a dictionary and their permission_values in sub-dictionaries.
+                    permission_names = list(role_permissions[role_list[0]].keys())  # Get all the permission names.
+                    permission_values = permission_values_to_emojis(list(role_permissions.values()), permission_names)  # Get all of the permissions values and convert them to √ or X.
 
-                clear_request = SERVICE.spreadsheets().values().clear(spreadsheetId=spreadsheet_id, range="A1:AH1000", body=clear_request_body())
-                titles_request = SERVICE.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id, body=titles_request_body(role_names, permission_names))
-                values_request = SERVICE.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id, body=values_request_body(permission_values))
-                clear_request.execute()  # Clears the spreadsheet.
-                titles_request.execute()
-                values_request.execute()  # Handling and execution of the requests to the Google API. See request_data.py for more info.
+                    clear_request = SERVICE.spreadsheets().values().clear(spreadsheetId=spreadsheet_id, range="A1:AH1000", body=clear_request_body())
+                    titles_request = SERVICE.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id, body=titles_request_body(role_names, permission_names))
+                    values_request = SERVICE.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id, body=values_request_body(permission_values))
+                    clear_request.execute()  # Clears the spreadsheet.
+                    titles_request.execute()
+                    values_request.execute()  # Handling and execution of the requests to the Google API. See request_data.py for more info.
 
-                embed = discord.Embed(title="Permission Export Complete!", description="Your server's role permission_values have been successfully exported!", color=color("GREEN"))
-                embed.add_field(name="Here's the link to your worksheet: ", value=link("SPREADSHEET") + spreadsheet_id)
-                embed.set_thumbnail(url=picture("GSHEET"))
-                await ctx.send(embed=embed)
-            except Exception as exception:
-                print("Server ID:" + ctx.guild.id + "\n Exception:" + str(exception))
-                embed = discord.Embed(title="Worksheet unavailable!", description="There was an issue trying to access your server's worksheet!", color=color("RED"))
-                embed.add_field(name="Make sure you have followed the !setuphelp steps correctly. If the issue persists, contact the BOT Owner.", value="```!setuphelp```")
-                embed.set_thumbnail(url=picture("ERROR"))
-                await ctx.send(embed=embed)
-    except FileNotFoundError:  # If the file does not exist, prompt user to configure.
-        embed = discord.Embed(title="No file found!", description="There was an issue trying to import your server's file from the database.", color=color("RED"))
-        embed.add_field(name="You have to configure your server first. Please try the command !setuphelp for more information.", value="```!setuphelp```")
+                    embed = discord.Embed(title="Permission Export Complete!", description="Your server's role permission_values have been successfully exported!", color=color("GREEN"))
+                    embed.add_field(name="Here's the link to your worksheet: ", value=link("SPREADSHEET") + spreadsheet_id)
+                    embed.set_thumbnail(url=picture("GSHEET"))
+                    await ctx.send(embed=embed)
+                except Exception as exception:
+                    print("Server ID:" + ctx.guild.id + "\n Exception:" + str(exception))
+                    embed = discord.Embed(title="Worksheet unavailable!", description="There was an issue trying to access your server's worksheet!", color=color("RED"))
+                    embed.add_field(name="Make sure you have followed the !setuphelp steps correctly. If the issue persists, contact the BOT Owner.", value="```!setuphelp```")
+                    embed.set_thumbnail(url=picture("ERROR"))
+                    await ctx.send(embed=embed)
+        except FileNotFoundError:  # If the file does not exist, prompt user to configure.
+            embed = discord.Embed(title="No file found!", description="There was an issue trying to import your server's file from the database.", color=color("RED"))
+            embed.add_field(name="You have to configure your server first. Please try the command !setuphelp for more information.", value="```!setuphelp```")
+            embed.set_thumbnail(url=picture("ERROR"))
+            await ctx.send(embed=embed)
+    else:  # If the sender is a simple Admin, refuse permission with an error embed.
+        embed = discord.Embed(title="Access Denied!", description="You have no proper authorization for this command.", color=color("RED"))
+        embed.add_field(name="This command may only be used by the server owner! ", value='<@' + str(ctx.guild.owner_id) + '>')
         embed.set_thumbnail(url=picture("ERROR"))
         await ctx.send(embed=embed)
 
