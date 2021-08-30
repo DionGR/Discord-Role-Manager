@@ -58,7 +58,7 @@ async def configure(ctx, *, spreadsheet_id=None):
         if ctx.message.author.id == ctx.guild.owner_id:  # If the sender is the server owner, proceed.
             file_name = str(ctx.guild.id) + ".txt"  # The name of the file is that of the server's unique ID.
             try:  # If the file exists, open and read it and give the link.
-                with open(path.join(path.dirname(path.realpath(__file__)) + r"\serverdata", file_name), "r+") as server_file:
+                with open(path.join("serverdata", file_name), "r+") as server_file:
                     server_file.truncate(0)
                     server_file.write(spreadsheet_id)
 
@@ -67,7 +67,7 @@ async def configure(ctx, *, spreadsheet_id=None):
                     embed.set_thumbnail(url=picture("GSHEET"))
                     await ctx.send(embed=embed)
             except FileNotFoundError:  # If it doesn't, create it and give the complete link.
-                with open(path.join(path.dirname(path.realpath(__file__)) + r"\serverdata", file_name), "w+") as server_file:
+                with open(path.join("serverdata", file_name), "w+") as server_file:
                     server_file.write(spreadsheet_id)
 
                 embed = discord.Embed(title="Worksheet Configuration Complete!", description="Your server has been added to the database.", color=color("GREEN"))
@@ -103,7 +103,7 @@ async def export(ctx):
     if ctx.message.author.id == ctx.guild.owner_id:
         file_name = str(ctx.guild.id) + ".txt"
         try:
-            with open(path.join(path.dirname(path.realpath(__file__)) + r"\serverdata", file_name), "r+") as server_file:
+            with open(path.join("serverdata", file_name), "r+") as server_file:
                 spreadsheet_id = server_file.read()
                 try:
                     role_list = ctx.guild.roles  # Export all the roles from a server. List of role type Objects.
